@@ -1,5 +1,11 @@
 import json
 from flask import Flask, render_template, request, jsonify
+import os
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from dotenv import load_dotenv
+from langchain_openai import AzureChatOpenAI
+
+
 
 def serialize_error_details(e):
     error_details = {}
@@ -12,6 +18,19 @@ def serialize_error_details(e):
     return error_details
 
 app = Flask(__name__)
+
+with app.app_context():
+   load_dotenv()
+   credential = DefaultAzureCredential()
+   token_provider = get_bearer_token_provider(
+       credential, "https://cognitiveservices.azure.com/.default"
+   )
+   global llm
+   llm = AzureChatOpenAI(
+       openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
+       azure_deployment=os.environ["AZURE_OPENAI_CHAT_DEPLOYMENT_NAME"],
+       azure_ad_token_provider=token_provider
+   )
 
 @app.route('/')
 def index():
@@ -26,9 +45,10 @@ def chat():
         print(message)
         if message:
             try:
+                response = llm.invoke(message)
                 return jsonify({
-                    'content': message,
-                    'response_metadata': "tu będą metadane"
+                    'content': response.content,
+                    'response_metadata': response.response_metadata
                 }), 200
             except Exception as e:
                 print(e)
