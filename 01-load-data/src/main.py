@@ -25,6 +25,21 @@ from azure.search.documents.indexes.models import (
 # List blob and return the list of blobs
 def list_blobs(account_name, container_name, credential):
     print(f"List blobs in container {container_name}")
+    blob_list = []
+    try:
+        # Define the blob_service_client variable
+        blob_service_client = BlobServiceClient(
+            account_url=f"https://{account_name}.blob.core.windows.net",
+            credential=credential
+        )
+        container_client = blob_service_client.get_container_client(container_name)
+        blobs = container_client.list_blobs()
+        for blob in blobs:
+            blob_list.append(blob)
+            print(blob.name)
+    except Exception as e:
+        print(e)
+    return blob_list
 
 
 # Get content of blob
@@ -58,6 +73,33 @@ def get_vector_store(credential, index_name):
     )
     embedding_function = embeddings.embed_query
 
+    # Define fields
+    fields = [
+        SimpleField(name="id", type=SearchFieldDataType.String, key=True, filterable=True),
+        SimpleField(name="data_classification", type=SearchFieldDataType.String, filterable=True),
+        SearchableField(name="metadata",type=SearchFieldDataType.String,searchable=True,),
+        SearchableField(name="title",type=SearchFieldDataType.String,searchable=True),
+        SimpleField( name="source", type=SearchFieldDataType.String, filterable=True),
+        SearchableField( name="content", type=SearchFieldDataType.String, searchable=True),
+        SearchField(
+            name="content_vector",
+            type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
+            searchable=True,
+            vector_search_dimensions=len(embedding_function("Text")),
+            vector_search_profile_name="myHnswProfile",
+        ),
+    ]
+
+    # Define the Azure Search vector store
+    vector_store: AzureSearch = AzureSearch(
+        azure_search_endpoint=os.getenv("AZURE_AI_SEARCH_ENDPOINT"),
+        azure_search_key=None,
+        index_name=index_name,
+        embedding_function=embeddings.embed_query,
+        fields=fields
+    )
+    return vector_store
+
 def add_document_to_vector_store(vector_store, file_path, data_classification, title, source):
     print("Add document '{title}' to vector store")
 
@@ -68,7 +110,7 @@ if __name__ == "__main__":
     credential = DefaultAzureCredential()
     index_name = os.getenv("INDEX_NAME")
     # Przykładowa implementacja
-    vector_store = get_vector_store(credential, "index_name")
+    vector_store = get_vector_store(credential, os.getenv("INDEX_NAME"))
     # blobs = list_blobs(account_name, container_name, credential)
     # for blob in blobs:
     #     blob_content = get_blob_content(account_name, container_name, blob.name, credential)
