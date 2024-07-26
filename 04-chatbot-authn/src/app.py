@@ -31,7 +31,7 @@ def get_vector_store(credential, index_name):
         azure_deployment=os.getenv("AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT"),
         openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        azure_ad_token_provider=token_provider
+        openai_api_key=os.environ["AZURE_OPENAI_API_KEY"]
     )
 
     # Define the Azure Search vector store
@@ -55,7 +55,7 @@ with app.app_context():
    llm = AzureChatOpenAI(
        openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
        azure_deployment=os.environ["AZURE_OPENAI_CHAT_DEPLOYMENT_NAME"],
-       azure_ad_token_provider=token_provider
+       openai_api_key=os.environ["AZURE_OPENAI_API_KEY"]
    )
 
 @app.errorhandler(AuthError)

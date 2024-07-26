@@ -15,7 +15,6 @@ Flask
 gunicorn
 Werkzeug
 langchain_core
-helpers
 Flask-Login
 helper-auth
 jose

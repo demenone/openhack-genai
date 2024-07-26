@@ -101,7 +101,7 @@ def get_file_classification(credential, temp_pdf_path):
     llm = AzureChatOpenAI(
         openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
         azure_deployment=os.environ["AZURE_OPENAI_CHAT_DEPLOYMENT_NAME"],
-        azure_ad_token_provider=token_provider
+        openai_api_key=os.environ["AZURE_OPENAI_API_KEY"]
     )
 
     map_template = """The following is a set of documents
@@ -167,7 +167,7 @@ def get_vector_store(credential, index_name):
         azure_deployment=os.getenv("AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT"),
         openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        azure_ad_token_provider=token_provider
+        openai_api_key=os.environ["AZURE_OPENAI_API_KEY"]
     )
     embedding_function = embeddings.embed_query
 
@@ -191,7 +191,7 @@ def get_vector_store(credential, index_name):
     # Define the Azure Search vector store
     vector_store: AzureSearch = AzureSearch(
         azure_search_endpoint=os.getenv("AZURE_AI_SEARCH_ENDPOINT"),
-        azure_search_key=None,
+        azure_search_key=os.getenv("AZURE_SEARCH_KEY"),
         index_name=index_name,
         embedding_function=embeddings.embed_query,
         fields=fields
