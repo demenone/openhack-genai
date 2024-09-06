@@ -101,15 +101,16 @@ def get_file_classification(credential, temp_pdf_path):
     llm = AzureChatOpenAI(
         openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
         azure_deployment=os.environ["AZURE_OPENAI_CHAT_DEPLOYMENT_NAME"],
-        openai_api_key=os.environ["AZURE_OPENAI_API_KEY"]
+        azure_ad_token_provider=token_provider
     )
 
     map_template = """The following is a set of documents
     {docs}
     Twoim zadaniem jest sklasyfikować dokument. Klasyfikacja dokumentów od najważniejszego do najniższego: Dane osobowe, Prywatny, Publiczny.
     Użyj następujących etykiet: personal-data dla "Dane osobowe", private dla "Prywatny", oraz public dla "Publiczny"
-    Jeżeli nie jest możliwe sklasyfikowanie usatw etykietę `private`.
-    W odpowiedzi podaj tylko klasyfikację. Jeżeli nie jesteś pewien, użyj etykiety private.
+    Jeżeli nie jest możliwe sklasyfikowanie ustaw etykietę private.
+    Jeżeli nie jesteś pewien lub nie wiesz, użyj etykiety private.
+    W odpowiedzi podaj tylko klasyfikację.
     Classification:"""
     
     map_prompt = PromptTemplate.from_template(map_template)
@@ -121,7 +122,8 @@ def get_file_classification(credential, temp_pdf_path):
     {docs}
     Twoim zadaniem jest wybrać jedną klasyfikację dla tego zestawu. Klasyfikacja dokumentów od najważniejszego do najniższego: Dane osobowe, Prywatny, Publiczny.
     Użyj następujących etykiet: personal-data dla "Dane osobowe", private dla "Prywatny", oraz public dla "Publiczny"
-    W odpowiedzi podaj tylko klasyfikację. Jeżeli nie jesteś pewien, użyj etykiety private.
+    Jeżeli nie jesteś pewien lub nie wiesz, użyj etykiety private.
+    W odpowiedzi podaj tylko klasyfikację.
     Classification:"""
     reduce_prompt = PromptTemplate.from_template(reduce_template)
 
@@ -167,7 +169,7 @@ def get_vector_store(credential, index_name):
         azure_deployment=os.getenv("AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT"),
         openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        openai_api_key=os.environ["AZURE_OPENAI_API_KEY"]
+        azure_ad_token_provider=token_provider
     )
     embedding_function = embeddings.embed_query
 
@@ -191,7 +193,7 @@ def get_vector_store(credential, index_name):
     # Define the Azure Search vector store
     vector_store: AzureSearch = AzureSearch(
         azure_search_endpoint=os.getenv("AZURE_AI_SEARCH_ENDPOINT"),
-        azure_search_key=os.getenv("AZURE_SEARCH_KEY"),
+        azure_search_key=None,
         index_name=index_name,
         embedding_function=embeddings.embed_query,
         fields=fields
